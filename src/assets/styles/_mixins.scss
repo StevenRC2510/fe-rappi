@@ -1,0 +1,53 @@
+// Responsive
+$breakpoints: (
+  'ip': 320px,
+  'ipx': 374px,
+  'ips': 414px,
+  'xs': 599px,
+  'xsm': 767px,
+  'sm': 959px,
+  'lg': 1200px,
+  'md': 1279px,
+  'mdx': 1535px,
+  'xlg': 1919px,
+  'sup': 2500px,
+) !default;
+
+// In `_mixins.scss`
+@mixin respond-to($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @media (min-width: map-get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  } @else {
+    @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. "
+        + "Please make sure it is defined in `$breakpoints` map.";
+  }
+}
+
+@mixin respond-to-max($breakpoint, $breakpoint1) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @if map-has-key($breakpoints, $breakpoint1) {
+      @media (min-width: map-get($breakpoints, $breakpoint)) and (max-width: map-get($breakpoints, $breakpoint1)) {
+        @content;
+      }
+    } @else {
+      @warn "Unfortunately, no value could be retrieved from `#{$breakpoint1}`. "
+          + "Please make sure it is defined in `$breakpoints` map.";
+    }
+  } @else {
+    @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. "
+        + "Please make sure it is defined in `$breakpoints` map.";
+  }
+}
+
+@mixin xs($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @media (max-width: map-get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  } @else {
+    @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. "
+        + "Please make sure it is defined in `$breakpoints` map.";
+  }
+}
