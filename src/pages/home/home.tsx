@@ -91,9 +91,9 @@ class Home extends Component<Props, State> {
       this.transformData(filterArray, '');
     }
     if (sublevelIdTemp !== sublevelId) {
-      this.setState({ sublevelId: sublevelIdTemp });
       const filterArray = this.newArray(sublevelIdTemp, prev.product);
       this.transformData(filterArray, '');
+      this.setState({ sublevelId: sublevelIdTemp }, () => this.filters());
     }
   };
 
@@ -250,6 +250,7 @@ class Home extends Component<Props, State> {
                 justify="center"
                 alignItems="center"
               >
+                <Typography>Disponibilidad</Typography>
                 <Grid item xs={12} md={8} className={classes.ctnTextFields}>
                   <RadioButton
                     radios={RadiosProps}
