@@ -8,7 +8,7 @@ import { ShoppingCart as ShoppingPage } from '../../pages/shoppingCart';
 import { SearchBox } from '../../shared/SearchBox';
 import { ModalDialog } from '../../shared/ModalDialog';
 import { ShoppingCart } from '@material-ui/icons';
-// import { RadioButton } from '../../shared/RadioButton';
+import { RadioButton } from '../../shared/RadioButton';
 import { Action } from '../../interfaces/models/action';
 import { addCart } from '../../store/home/actions';
 // import { SimpleSelect } from '../../shared/SimpleSelect/SimpleSelect';
@@ -29,12 +29,31 @@ interface State {
   available: any;
   since_quantity: any; //cantidad inicial
   until_quantity: any; //cantidad final
+  since_price: any; //cantidad inicial
+  until_price: any; //cantidad final
 }
 
 enum handleName {
   since_quantity = 'since_quantity',
   until_quantity = 'until_quantity',
+  since_price = 'since_price',
+  until_price = 'until_price',
 }
+
+const RadiosProps = [
+  {
+    label: 'Disponible',
+    value: '1',
+  },
+  {
+    label: 'No Disponible',
+    value: '2',
+  },
+  {
+    label: 'Ninguno',
+    value: '',
+  },
+];
 
 class Home extends Component<Props, State> {
   state = {
@@ -44,8 +63,10 @@ class Home extends Component<Props, State> {
     sublevelId: null,
     products: [],
     available: 'none',
-    since_quantity: 'none',
-    until_quantity: 'none',
+    since_quantity: '',
+    until_quantity: '',
+    since_price: '',
+    until_price: '',
   };
 
   componentDidMount = () => {
@@ -53,10 +74,13 @@ class Home extends Component<Props, State> {
     const sublevelIdTemp = this.location();
     const filterArray = this.newArray(sublevelIdTemp, this.props.product);
     this.transformData(filterArray, '');
-    this.setState({
-      actualityPath: pathname,
-      sublevelId: sublevelIdTemp ? sublevelIdTemp : null,
-    });
+    this.setState(
+      {
+        actualityPath: pathname,
+        sublevelId: sublevelIdTemp ? sublevelIdTemp : null,
+      },
+      () => this.filters(),
+    );
   };
 
   componentWillReceiveProps = (prev: any) => {
@@ -75,16 +99,19 @@ class Home extends Component<Props, State> {
 
   filterByName = (value: string | null) => {
     const search = value || '';
-    const filterArray = this.newArray(
-      this.state.sublevelId,
-      this.props.product,
-    );
-    this.transformData(filterArray, search);
-    this.setState({ search });
+    this.setState({ search }, () => this.filters());
   };
 
   filters = () => {
-    const { available, since_quantity, until_quantity } = this.state;
+    const {
+      available,
+      since_quantity,
+      until_quantity,
+      since_price,
+      until_price,
+      search,
+    } = this.state;
+    const search_local = search || '';
     let filterArray = this.newArray(this.state.sublevelId, this.props.product);
     if (available === '1') {
       filterArray = filterArray.filter((item: any) => item.available);
@@ -93,18 +120,42 @@ class Home extends Component<Props, State> {
       filterArray = filterArray.filter((item: any) => !item.available);
     }
 
-    if (since_quantity !== 'none' && parseInt(since_quantity, 10) > 0) {
+    if (since_quantity !== '' && parseInt(since_quantity, 10) > 0) {
       filterArray = filterArray.filter(
-        (item: any) => item.quantity > parseInt(since_quantity, 10),
+        (item: any) => item.quantity >= parseInt(since_quantity, 10),
       );
     }
-    if (until_quantity !== 'none' && parseInt(until_quantity, 10) > 0) {
+    if (until_quantity !== '' && parseInt(until_quantity, 10) > 0) {
       filterArray = filterArray.filter(
-        (item: any) => item.quantity < parseInt(until_quantity, 10),
+        (item: any) => item.quantity <= parseInt(until_quantity, 10),
       );
     }
 
-    this.transformData(filterArray, '');
+    // filtro por precio
+
+    const since_price_local = since_price.split(',').join('');
+    const until_price_local = until_price.split(',').join('');
+
+    if (since_price_local !== '' && parseInt(since_price_local, 10) > 0) {
+      filterArray = filterArray.filter((item: any) => {
+        const item_price_local = item.price
+          .slice(1)
+          .split(',')
+          .join('');
+        return item_price_local >= parseInt(since_price_local, 10);
+      });
+    }
+    if (until_price_local !== '' && parseInt(until_price_local, 10) > 0) {
+      filterArray = filterArray.filter((item: any) => {
+        const item_price_local = item.price
+          .slice(1)
+          .split(',')
+          .join('');
+        return item_price_local <= parseInt(until_price_local, 10);
+      });
+    }
+
+    this.transformData(filterArray, search_local);
   };
 
   handleChange = (name: handleName) => (event: any) => {
@@ -189,36 +240,104 @@ class Home extends Component<Props, State> {
               justify="space-between"
               className={'padding-0'}
             >
-              <Grid item xs={12} md={3}>
-                Disponibilidad
+              <Grid
+                container
+                className="padding-0"
+                direction="column"
+                item
+                xs={12}
+                md={3}
+                justify="center"
+                alignItems="center"
+              >
+                <Grid item xs={12} md={8} className={classes.ctnTextFields}>
+                  <RadioButton
+                    radios={RadiosProps}
+                    onChange={this.handleChange}
+                    inputProps={{
+                      name: 'available',
+                      value: this.state.available,
+                    }}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={4}>
-                Rango de precios
+              <Grid
+                container
+                className="padding-0"
+                direction="column"
+                item
+                xs={12}
+                md={4}
+                justify="center"
+                alignItems="center"
+              >
+                <Typography>Rango por Precio</Typography>
+                <Grid item xs={12} md={8} className={classes.ctnTextFields}>
+                  <TextField
+                    label="Precio Inicial"
+                    placeholder="15,000"
+                    value={this.state.since_price}
+                    onChange={this.handleChange(handleName.since_price)}
+                    type="text"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    margin="normal"
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Precio Final"
+                    placeholder="150,000"
+                    value={this.state.until_price}
+                    onChange={this.handleChange(handleName.until_price)}
+                    type="text"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    margin="normal"
+                    variant="outlined"
+                  />
+                  {/* <SimpleSelect NAMEoptionValues={optionValues} label="Ordenar Por" /> */}
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={5} className={classes.ctnTextFields}>
-                <TextField
-                  label="Cantidad Inicial"
-                  value={this.state.since_quantity}
-                  onChange={this.handleChange(handleName.since_quantity)}
-                  type="text"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  margin="normal"
-                  variant="outlined"
-                />
-                <TextField
-                  label="Cantidad Final"
-                  value={this.state.until_quantity}
-                  onChange={this.handleChange(handleName.until_quantity)}
-                  type="text"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  margin="normal"
-                  variant="outlined"
-                />
-                {/* <SimpleSelect NAMEoptionValues={optionValues} label="Ordenar Por" /> */}
+              <Grid
+                container
+                className="padding-0"
+                direction="column"
+                item
+                xs={12}
+                md={5}
+                justify="center"
+                alignItems="center"
+              >
+                <Typography>Rango por Cantidad</Typography>
+                <Grid item xs={12} md={8} className={classes.ctnTextFields}>
+                  <TextField
+                    label="Cantidad Inicial"
+                    placeholder="20"
+                    value={this.state.since_quantity}
+                    onChange={this.handleChange(handleName.since_quantity)}
+                    type="text"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    margin="normal"
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Cantidad Final"
+                    placeholder="800"
+                    value={this.state.until_quantity}
+                    onChange={this.handleChange(handleName.until_quantity)}
+                    type="text"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    margin="normal"
+                    variant="outlined"
+                  />
+                  {/* <SimpleSelect NAMEoptionValues={optionValues} label="Ordenar Por" /> */}
+                </Grid>
               </Grid>
             </Grid>
           </Grid>

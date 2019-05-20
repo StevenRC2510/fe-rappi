@@ -8,27 +8,36 @@ import {
 } from '@material-ui/core';
 
 import { styles } from './styles';
+import { RadioSharp } from '@material-ui/icons';
 
 interface InputProps {
   name: any;
   value: any;
-  onChange: () => void;
 }
 interface Props {
   inputProps: InputProps;
+  radios: any[];
   classes: any;
-  label: string;
-  value: any;
+  onChange: any;
 }
 interface State {}
 
 class RadioButton extends PureComponent<Props, State> {
   render() {
-    const { label, inputProps } = this.props;
+    const { inputProps, radios, onChange } = this.props;
+
     return (
       <FormGroup row>
-        <RadioGroup {...inputProps}>
-          <FormControlLabel control={<Radio />} label={label} />
+        <RadioGroup {...inputProps} onChange={onChange('available')}>
+          {radios &&
+            radios.length > 0 &&
+            radios.map((radioItem: any) => (
+              <FormControlLabel
+                value={radioItem.value}
+                control={<Radio />}
+                label={radioItem.label}
+              />
+            ))}
         </RadioGroup>
       </FormGroup>
     );
